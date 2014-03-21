@@ -18,17 +18,24 @@ package com.android.settings.cyanogenmod;
 
 import android.content.ContentResolver;
 import android.content.Context;
+import android.content.SharedPreferences;
 import android.os.Bundle;
 import android.os.Vibrator;
+import android.preference.CheckBoxPreference;
+import android.preference.Preference;
 import android.preference.PreferenceGroup;
+import android.preference.PreferenceManager;
 import android.preference.PreferenceScreen;
 import android.provider.Settings;
+import android.util.Log;
 
 import com.android.settings.R;
 import com.android.settings.SettingsPreferenceFragment;
 import com.android.settings.hardware.DisplayColor;
 import com.android.settings.hardware.DisplayGamma;
 import com.android.settings.hardware.VibratorIntensity;
+
+import org.cyanogenmod.hardware.UsbFastCharging;
 
 public class MoreDeviceSettings extends SettingsPreferenceFragment {
     private static final String TAG = "MoreDeviceSettings";
@@ -37,6 +44,10 @@ public class MoreDeviceSettings extends SettingsPreferenceFragment {
     private static final String KEY_DISPLAY_CALIBRATION_CATEGORY = "display_calibration_category";
     private static final String KEY_DISPLAY_COLOR = "color_calibration";
     private static final String KEY_DISPLAY_GAMMA = "gamma_tuning";
+    private static final String KEY_USB_FAST_CHARGING_CATEGORY = "usb_fast_charging_category";
+    private static final String KEY_USB_FAST_CHARGING = "usb_fast_charging";
+
+    private CheckBoxPreference mUsbFastCharging;
 
     @Override
     public void onCreate(Bundle savedInstanceState) {
@@ -63,5 +74,51 @@ public class MoreDeviceSettings extends SettingsPreferenceFragment {
                 calibrationCategory.removePreference(findPreference(KEY_DISPLAY_GAMMA));
             }
         }
+
+        final PreferenceGroup usbFastChargingCategory =
+                (PreferenceGroup) findPreference(KEY_USB_FAST_CHARGING_CATEGORY);
+        mUsbCharging = (CheckBoxPreference) findPreference(KEY_USB_FAST_CHARGING);
+
+        if (isUsbFastChargingSupported()) {
+            mUsbFastCharging.setChecked(UsbFastCharging.isEnabled());
+        } else {
+            getPreferenceScreen().removePreference(usbFastChargingCategory);
+        }
     }
+
+    @Override
+    public boolean onPreferenceTreeClick(PreferenceScreen preferenceScreen, Preference preference) {
+
+        if (preference == mUsbFastCharging) {
+            return UsbFastCharging.setEnabled(mUsbFastCharging.isChecked());
+        }
+
+        return super.onPreferenceTreeClick(preferenceScreen, preference);
+    }
+
+    /**
+     * Restore the properties associated with this preference on boot
+     * @param context A valid context
+     */
+    public static void restore(Context context) {
+        if (isUsbFastChargingSupported()) {
+            final SharedPreferences prefs = PreferenceManager.getDefaultSharedPreferences(context);
+            final boolean enabled = prefs.getBoolean(KEY_USB_FAST_CHARGING, true);
+            if (!UsbFastCharging.setEnabled(enabled)) {
+                Log.e(TAG, "Failed to restore USB fast charging settings.");
+            } else {
+                Log.d(TAG, "USB fast charging settings restored.");
+            }
+        }
+    }
+
+    private static boolean isUsbFastChargingSupported() {
+        try {
+            return UsbFastCharging.isSupported();
+        } catch (NoClassDefFoundError e) {
+            // Hardware abstraction framework not installed
+            return false;
+        }
+    }
+
 }
