@@ -77,7 +77,7 @@ public class MoreDeviceSettings extends SettingsPreferenceFragment {
 
         final PreferenceGroup usbFastChargingCategory =
                 (PreferenceGroup) findPreference(KEY_USB_FAST_CHARGING_CATEGORY);
-        mUsbCharging = (CheckBoxPreference) findPreference(KEY_USB_FAST_CHARGING);
+        mUsbFastCharging = (CheckBoxPreference) findPreference(KEY_USB_FAST_CHARGING);
 
         if (isUsbFastChargingSupported()) {
             mUsbFastCharging.setChecked(UsbFastCharging.isEnabled());
